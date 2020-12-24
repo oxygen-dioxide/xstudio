@@ -1,3 +1,9 @@
+#my
+*.bat
+*.mrq
+*.ppt
+*.pptx
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
