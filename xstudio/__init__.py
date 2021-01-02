@@ -32,6 +32,16 @@ class Svipnote():
         self.lyric=lyric
         self.pronouncing=pronouncing
 
+    def to_music21_note(self):
+        '''
+        将svip音符对象转为music21音符对象
+        '''
+        import music21
+        n=music21.note.Note(self.notenum)
+        n.duration=music21.duration.Duration(self.length/480)
+        n.lyric=self.lyric
+        return n
+
     def __str__(self):
         return "  Svipnote {} {} {} {} {}".format(self.start,
             self.length,
@@ -90,6 +100,31 @@ class Sviptrack():
         track.append(mido.MetaMessage('end_of_track'))
         return track
 
+    def to_music21_stream(self):
+        '''
+        将svip音轨对象转换为music21 stream，并自动判断调性
+        '''
+        import music21
+        #转换
+        st=music21.stream.Stream()
+        for n in self.note:
+            st.insert(n.start/480,n.to_music21_note(),ignoreSort=True)#为提高性能，这里先不排序，最后统一排序
+        st.sort()
+        #判断调性
+        try:
+            k=st.analyze("key")
+        except music21.analysis.discrete.DiscreteAnalysisException:
+            k=music21.key.Key('C')
+        st.insert(0,k)
+        ks=st.keySignature
+        #消除还原符号，把音高数值嵌入到调性中。
+        pitchdict={p.pitchClass:p.name for p in ks.getPitches()}
+        for n in st.notes:
+            m=n.pitch.midi
+            n.name=pitchdict.get(n.pitch.pitchClass,n.name)
+            n.octave+=(m-n.pitch.midi)//12
+        return st
+
 class Svipfile():
     '''
     svip文件类
@@ -130,6 +165,18 @@ class Svipfile():
         for i in self.track:
             mid.tracks.append(i.to_midi_track())
         return mid
+
+    def to_music21_score(self):
+        '''
+        将svip文件对象按音轨转换为music21乐谱对象，并自动判断调性
+        '''
+        import music21
+        sc=music21.stream.Score()
+        for tr in self.track:
+            p=music21.stream.Part(tr.to_music21_stream())
+            p.partName=tr.name
+            sc.append(p)
+        return sc
 
 def parsenote(noteobject)->Svipnote:
     #解析音符对象
@@ -178,7 +225,7 @@ def opensvip(filename:str):
 
 def main():
     s=opensvip(r"C:/users/lin/desktop/2.svip")
-    s.to_midi_file().save(r"C:/users/lin/desktop/2.mid")
+    s.to_music21_score().show()
 
 if __name__=="__main__":
     main()
