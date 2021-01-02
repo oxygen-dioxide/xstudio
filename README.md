@@ -1,5 +1,7 @@
 # xstudio-python
 
+[github](https://github.com/oxygen-dioxide/xstudio)   [gitee](https://gitee.com/oxygendioxide/xstudio)   [bitbucket](https://bitbucket.org/oxygendioxide/xstudio)
+
 #### 介绍
 解析微软x studio .svip文件的Python库，使用pythonnet实现
 
